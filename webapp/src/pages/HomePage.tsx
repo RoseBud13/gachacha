@@ -76,6 +76,9 @@ const HomePage: React.FC = () => {
   };
 
   const handleCardClick = (index: number) => {
+    // Only allow clicks when a card is selected and movement has stopped
+    if (isMoving || selectedCard === null) return;
+
     if (selectedCard === index) {
       setFlippedCard(flippedCard === index ? null : index);
     }
@@ -104,7 +107,7 @@ const HomePage: React.FC = () => {
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     const scale = (z + radius) / (radius * 2);
-    const rotateY = (index * anglePerCard - rotation) % 360;
+    const rotateY = index * anglePerCard - rotation;
 
     return {
       transform: `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
