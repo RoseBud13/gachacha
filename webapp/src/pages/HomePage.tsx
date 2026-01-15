@@ -85,6 +85,10 @@ const HomePage: React.FC = () => {
   };
 
   const handleReset = () => {
+    // Reset state first to ensure clean transition
+    setSelectedCard(null);
+    setFlippedCard(null);
+
     // Delete the drawn card if the setting is enabled
     if (deleteDrawnCard && selectedCard !== null && cardContents.length > 3) {
       // Remove the drawn card from the pool
@@ -97,8 +101,7 @@ const HomePage: React.FC = () => {
       });
     }
 
-    setSelectedCard(null);
-    setFlippedCard(null);
+    // Start movement after state is reset
     setIsMoving(true);
   };
 
@@ -180,7 +183,7 @@ const HomePage: React.FC = () => {
       </div>
 
       <div className="controls">
-        {!selectedCard ? (
+        {selectedCard === null ? (
           <button className="confirm-button" onClick={handleConfirm}>
             Confirm Selection
           </button>
