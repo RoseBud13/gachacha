@@ -12,6 +12,9 @@ const SettingsPage: React.FC = () => {
   const [localCardContents, setLocalCardContents] = useState<CardContent[]>(
     settings.cardContents
   );
+  const [localDeleteDrawnCard, setLocalDeleteDrawnCard] = useState(
+    settings.deleteDrawnCard
+  );
 
   const handleCardAmountChange = (amount: number) => {
     const validAmount = Math.max(3, Math.min(20, amount));
@@ -42,7 +45,8 @@ const SettingsPage: React.FC = () => {
     updateSettings({
       cardAmount: localCardAmount,
       cardContents: localCardContents,
-      moveSpeed: localMoveSpeed
+      moveSpeed: localMoveSpeed,
+      deleteDrawnCard: localDeleteDrawnCard
     });
     navigate('/');
   };
@@ -58,6 +62,7 @@ const SettingsPage: React.FC = () => {
     }));
     setLocalCardAmount(10);
     setLocalMoveSpeed(1);
+    setLocalDeleteDrawnCard(false);
     setLocalCardContents(defaultContents);
   };
 
@@ -102,6 +107,25 @@ const SettingsPage: React.FC = () => {
                 className="slider"
               />
               <div className="value-display">{localMoveSpeed.toFixed(1)}x</div>
+            </div>
+          </div>
+
+          {/* Delete Drawn Card */}
+          <div className="setting-section">
+            <h2>Delete Drawn Card</h2>
+            <div className="setting-control">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={localDeleteDrawnCard}
+                  onChange={e => setLocalDeleteDrawnCard(e.target.checked)}
+                />
+                <span className="toggle-text">
+                  {localDeleteDrawnCard
+                    ? 'Drawn cards will be removed from the pool'
+                    : 'Drawn cards remain in the pool'}
+                </span>
+              </label>
             </div>
           </div>
 

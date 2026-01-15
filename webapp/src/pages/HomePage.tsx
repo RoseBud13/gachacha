@@ -5,7 +5,7 @@ import './HomePage.css';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { settings } = useAppContext();
+  const { settings, updateSettings } = useAppContext();
   const [rotation, setRotation] = useState(0);
   const [isMoving, setIsMoving] = useState(true);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
   const animationRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const { cardAmount, cardContents, moveSpeed } = settings;
+  const { cardAmount, cardContents, moveSpeed, deleteDrawnCard } = settings;
 
   // Auto-rotate cards
   useEffect(() => {
@@ -85,6 +85,18 @@ const HomePage: React.FC = () => {
   };
 
   const handleReset = () => {
+    // Delete the drawn card if the setting is enabled
+    if (deleteDrawnCard && selectedCard !== null && cardContents.length > 3) {
+      // Remove the drawn card from the pool
+      const updatedContents = cardContents.filter((_, i) => i !== selectedCard);
+      const newAmount = Math.max(3, cardAmount - 1);
+
+      updateSettings({
+        cardContents: updatedContents,
+        cardAmount: newAmount
+      });
+    }
+
     setSelectedCard(null);
     setFlippedCard(null);
     setIsMoving(true);

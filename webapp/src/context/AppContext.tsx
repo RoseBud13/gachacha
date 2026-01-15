@@ -15,6 +15,7 @@ interface AppSettings {
   cardAmount: number;
   cardContents: CardContent[];
   moveSpeed: number;
+  deleteDrawnCard: boolean;
 }
 
 interface AppContextType {
@@ -33,7 +34,8 @@ const defaultCardContents: CardContent[] = Array.from(
 const defaultSettings: AppSettings = {
   cardAmount: 10,
   cardContents: defaultCardContents,
-  moveSpeed: 1
+  moveSpeed: 1,
+  deleteDrawnCard: false
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
