@@ -91,7 +91,16 @@ const HomePage: React.FC = () => {
   const getCardStyle = (index: number): React.CSSProperties => {
     const anglePerCard = 360 / cardAmount;
     const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
-    const radius = 250; // Distance from center
+    // Dynamic radius based on screen width and card amount
+    const screenWidth = window.innerWidth;
+    const baseRadius = screenWidth * 0.25;
+    const cardAmountFactor = Math.max(1, cardAmount / 10); // Scale up for more cards
+    const minRadius = 200 * cardAmountFactor;
+    const maxRadius = 400 * cardAmountFactor;
+    const radius = Math.min(
+      maxRadius,
+      Math.max(minRadius, baseRadius * cardAmountFactor)
+    );
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     const scale = (z + radius) / (radius * 2);
@@ -116,14 +125,24 @@ const HomePage: React.FC = () => {
         onMouseMove={handleMouseMove}
         onTouchMove={handleTouchMove}
       >
-        <div className="cards-wrapper">
+        <div
+          className="cards-wrapper"
+          style={{
+            width: `${Math.max(120, 160 - cardAmount * 2)}px`,
+            height: `${Math.max(180, 240 - cardAmount * 3)}px`
+          }}
+        >
           {cardContents.slice(0, cardAmount).map((card, index) => (
             <div
               key={card.id}
               className={`card ${selectedCard === index ? 'selected' : ''} ${
                 flippedCard === index ? 'flipped' : ''
               }`}
-              style={getCardStyle(index)}
+              style={{
+                ...getCardStyle(index),
+                width: `${Math.max(120, 160 - cardAmount * 2)}px`,
+                height: `${Math.max(180, 240 - cardAmount * 3)}px`
+              }}
               onClick={() => handleCardClick(index)}
             >
               <div className="card-inner">
