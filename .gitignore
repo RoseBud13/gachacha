@@ -1,0 +1,103 @@
+# --------------------
+# Python
+# --------------------
+__pycache__/
+*.py[cod]
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Pip dependency management
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtualenv
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# --------------------
+# Logs
+# --------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --------------------
+# Docker
+# --------------------
+*.pid
+docker-compose.override.yml
+docker-compose.dev.yml
+.dockerignore
+
+# --------------------
+# Testing & Coverage
+# --------------------
+.pytest_cache/
+.cache/
+.coverage
+.coverage.*
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+htmlcov/
+
+# --------------------
+# Type checkers
+# --------------------
+.mypy_cache/
+.dmypy.json
+.pytype/
+.pyre/
+
+# --------------------
+# Editor / IDE
+# --------------------
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# --------------------
+# OS
+# --------------------
+.DS_Store
+
+# --------------------
+# Node.js
+# --------------------
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# --------------------
+# dotenv
+# --------------------
+.env.*
+*.env
+
+# --------------------
+# Custom project dirs
+# --------------------
+media/
+materials/
+versions/
