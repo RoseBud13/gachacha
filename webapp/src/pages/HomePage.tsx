@@ -21,7 +21,7 @@ const HomePage: React.FC = () => {
     if (!isMoving) return;
 
     const animate = () => {
-      setRotation(prev => prev + 0.2 * moveSpeed * direction);
+      setRotation(prev => prev + 0.5 * moveSpeed * direction);
       animationRef.current = requestAnimationFrame(animate);
     };
 
