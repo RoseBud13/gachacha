@@ -1,25 +1,112 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  useCallback
-} from 'react';
+import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import './HomePage.css';
 
+interface CardProps {
+  card: { id: number; text: string };
+  index: number;
+  anglePerCard: number;
+  radius: number;
+  width: number;
+  height: number;
+  isSelected: boolean;
+  isFlipped: boolean;
+  isMoving: boolean;
+  onClick: () => void;
+  rotationRef: React.MutableRefObject<number>;
+}
+
+const Card = memo<CardProps>(
+  ({
+    card,
+    index,
+    anglePerCard,
+    radius,
+    width,
+    height,
+    isSelected,
+    isFlipped,
+    isMoving,
+    onClick,
+    rotationRef
+  }) => {
+    const cardRef = useRef<HTMLDivElement>(null);
+
+    // Update card position directly via DOM - no React re-renders!
+    useEffect(() => {
+      let animationId: number;
+
+      const updatePosition = () => {
+        if (cardRef.current) {
+          const rotation = rotationRef.current;
+          const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
+          const x = Math.sin(angle) * radius;
+          const z = Math.cos(angle) * radius;
+          const scale = (z + radius) / (radius * 2);
+          const rotateY = index * anglePerCard - rotation;
+
+          cardRef.current.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`;
+          cardRef.current.style.zIndex = String(Math.round(z + radius));
+          cardRef.current.style.opacity = scale > 0.3 ? '1' : '0.3';
+        }
+
+        animationId = requestAnimationFrame(updatePosition);
+      };
+
+      updatePosition();
+
+      return () => {
+        if (animationId) {
+          cancelAnimationFrame(animationId);
+        }
+      };
+    }, [index, anglePerCard, radius, rotationRef]);
+
+    return (
+      <div
+        ref={cardRef}
+        className={`card ${isSelected ? 'selected' : ''} ${
+          isFlipped ? 'flipped' : ''
+        }`}
+        style={{
+          width: `${width}px`,
+          height: `${height}px`
+        }}
+        onClick={onClick}
+      >
+        <div className="card-inner">
+          <div className="card-back">
+            <div className="card-back-design">
+              {!isMoving && <div className="card-back-pattern"></div>}
+              <div className="card-back-logo">?</div>
+            </div>
+          </div>
+          <div className="card-front">
+            <div className="card-content">
+              <h2>🎉</h2>
+              <p>{card.text}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+Card.displayName = 'Card';
+
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppContext();
-  const [rotation, setRotation] = useState(0);
   const [isMoving, setIsMoving] = useState(true);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
-  const [direction, setDirection] = useState(1); // 1 for right, -1 for left
+  const rotationRef = useRef(0);
+  const directionRef = useRef(1); // 1 for right, -1 for left
   const animationRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastUpdateTimeRef = useRef<number>(0);
+  const cardsWrapperRef = useRef<HTMLDivElement>(null);
 
   const { cardAmount, cardContents, moveSpeed, deleteDrawnCard } = settings;
 
@@ -38,19 +125,12 @@ const HomePage: React.FC = () => {
 
   const anglePerCard = useMemo(() => 360 / cardAmount, [cardAmount]);
 
-  // Auto-rotate cards with throttling for better performance
+  // Animate using just the ref - no state updates, no re-renders!
   useEffect(() => {
     if (!isMoving) return;
 
-    const FPS_TARGET = 30; // Reduce from 60 FPS to 30 FPS for older devices
-    const FRAME_DURATION = 1000 / FPS_TARGET;
-
-    const animate = (currentTime: number) => {
-      // Throttle updates to target FPS
-      if (currentTime - lastUpdateTimeRef.current >= FRAME_DURATION) {
-        setRotation(prev => prev + 0.5 * moveSpeed * direction);
-        lastUpdateTimeRef.current = currentTime;
-      }
+    const animate = () => {
+      rotationRef.current += 0.5 * moveSpeed * directionRef.current;
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -61,7 +141,7 @@ const HomePage: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isMoving, direction, moveSpeed]);
+  }, [isMoving, moveSpeed]);
 
   // Handle mouse movement
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -72,9 +152,9 @@ const HomePage: React.FC = () => {
     const threshold = 100; // pixels from edge
 
     if (x < threshold) {
-      setDirection(-1);
+      directionRef.current = -1;
     } else if (x > rect.width - threshold) {
-      setDirection(1);
+      directionRef.current = 1;
     }
   };
 
@@ -87,16 +167,15 @@ const HomePage: React.FC = () => {
     const threshold = 100;
 
     if (x < threshold) {
-      setDirection(-1);
+      directionRef.current = -1;
     } else if (x > rect.width - threshold) {
-      setDirection(1);
+      directionRef.current = 1;
     }
   };
 
   const handleConfirm = () => {
     // Find the card closest to center (0 degrees position)
-    const anglePerCard = 360 / cardAmount;
-    const normalizedRotation = ((rotation % 360) + 360) % 360;
+    const normalizedRotation = ((rotationRef.current % 360) + 360) % 360;
     const centeredCardIndex =
       Math.round(normalizedRotation / anglePerCard) % cardAmount;
 
@@ -134,23 +213,8 @@ const HomePage: React.FC = () => {
     setIsMoving(true);
   };
 
-  // Calculate card positions - optimized with cached values
-  const getCardStyle = useCallback(
-    (index: number): React.CSSProperties => {
-      const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
-      const x = Math.sin(angle) * radius;
-      const z = Math.cos(angle) * radius;
-      const scale = (z + radius) / (radius * 2);
-      const rotateY = index * anglePerCard - rotation;
-
-      return {
-        transform: `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
-        zIndex: Math.round(z + radius),
-        opacity: scale > 0.3 ? 1 : 0.3
-      };
-    },
-    [rotation, radius, anglePerCard]
-  );
+  const cardWidth = Math.max(120, 160 - cardAmount * 2);
+  const cardHeight = Math.max(180, 240 - cardAmount * 3);
 
   return (
     <div className="home-page">
@@ -165,40 +229,28 @@ const HomePage: React.FC = () => {
         onTouchMove={handleTouchMove}
       >
         <div
+          ref={cardsWrapperRef}
           className="cards-wrapper"
           style={{
-            width: `${Math.max(120, 160 - cardAmount * 2)}px`,
-            height: `${Math.max(180, 240 - cardAmount * 3)}px`
+            width: `${cardWidth}px`,
+            height: `${cardHeight}px`
           }}
         >
           {cardContents.slice(0, cardAmount).map((card, index) => (
-            <div
+            <Card
               key={card.id}
-              className={`card ${selectedCard === index ? 'selected' : ''} ${
-                flippedCard === index ? 'flipped' : ''
-              }`}
-              style={{
-                ...getCardStyle(index),
-                width: `${Math.max(120, 160 - cardAmount * 2)}px`,
-                height: `${Math.max(180, 240 - cardAmount * 3)}px`
-              }}
+              card={card}
+              index={index}
+              anglePerCard={anglePerCard}
+              radius={radius}
+              width={cardWidth}
+              height={cardHeight}
+              isSelected={selectedCard === index}
+              isFlipped={flippedCard === index}
+              isMoving={isMoving}
               onClick={() => handleCardClick(index)}
-            >
-              <div className="card-inner">
-                <div className="card-back">
-                  <div className="card-back-design">
-                    <div className="card-back-pattern"></div>
-                    <div className="card-back-logo">?</div>
-                  </div>
-                </div>
-                <div className="card-front">
-                  <div className="card-content">
-                    <h2>🎉</h2>
-                    <p>{card.text}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
+              rotationRef={rotationRef}
+            />
           ))}
         </div>
       </div>
