@@ -100,7 +100,7 @@ const SettingsPage: React.FC = () => {
               <input
                 type="range"
                 min="0.5"
-                max="3"
+                max="10"
                 step="0.1"
                 value={localMoveSpeed}
                 onChange={e => setLocalMoveSpeed(Number(e.target.value))}

@@ -34,7 +34,7 @@ const defaultCardContents: CardContent[] = Array.from(
 const defaultSettings: AppSettings = {
   cardAmount: 10,
   cardContents: defaultCardContents,
-  moveSpeed: 1,
+  moveSpeed: 5,
   deleteDrawnCard: false
 };
 
