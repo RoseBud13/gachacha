@@ -79,7 +79,7 @@ const Card = memo<CardProps>(
           <div className="card-back">
             <div className="card-back-design">
               {!isMoving && <div className="card-back-pattern"></div>}
-              <div className="card-back-logo">?</div>
+              {!isFlipped && <div className="card-back-logo">?</div>}
             </div>
           </div>
           <div className="card-front">
