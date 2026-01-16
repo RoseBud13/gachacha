@@ -1,0 +1,271 @@
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { Hands } from '@mediapipe/hands';
+import type { Results, NormalizedLandmark } from '@mediapipe/hands';
+import { Camera } from '@mediapipe/camera_utils';
+
+export interface GestureData {
+  handDetected: boolean;
+  palmX: number; // Normalized 0-1, where 0.5 is center
+  isPinching: boolean;
+  gestureSpeed: number; // -1 to 1, negative is left, positive is right
+}
+
+export interface UseGestureControlOptions {
+  onGestureUpdate?: (gesture: GestureData) => void;
+  enabled?: boolean;
+}
+
+export function useGestureControl(options: UseGestureControlOptions = {}) {
+  const { onGestureUpdate, enabled = true } = options;
+
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const handsRef = useRef<Hands | null>(null);
+  const cameraRef = useRef<Camera | null>(null);
+
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentGesture, setCurrentGesture] = useState<GestureData>({
+    handDetected: false,
+    palmX: 0.5,
+    isPinching: false,
+    gestureSpeed: 0
+  });
+
+  const calculatePinchDistance = useCallback(
+    (landmarks: NormalizedLandmark[]) => {
+      // Calculate distance between thumb tip and index finger tip
+      const thumbTip = landmarks[4];
+      const indexTip = landmarks[8];
+
+      const dx = thumbTip.x - indexTip.x;
+      const dy = thumbTip.y - indexTip.y;
+      const dz = thumbTip.z - indexTip.z;
+
+      return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    },
+    []
+  );
+
+  const calculateGestureSpeed = useCallback((palmX: number) => {
+    // Palm position: 0 (left edge) to 1 (right edge)
+    // Center is 0.5
+    const deadZone = 0.2; // Center dead zone (0.3 to 0.7)
+
+    if (palmX > 0.5 + deadZone) {
+      // Moving right - cards should move right (positive direction)
+      const intensity = (palmX - (0.5 + deadZone)) / (0.5 - deadZone);
+      return Math.min(1, intensity);
+    } else if (palmX < 0.5 - deadZone) {
+      // Moving left - cards should move left (negative direction)
+      const intensity = (0.5 - deadZone - palmX) / (0.5 - deadZone);
+      return -Math.min(1, intensity);
+    }
+
+    return 0;
+  }, []);
+
+  const onResults = useCallback(
+    (results: Results) => {
+      if (!canvasRef.current) return;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      let gestureData: GestureData = {
+        handDetected: false,
+        palmX: 0.5,
+        isPinching: false,
+        gestureSpeed: 0
+      };
+
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        const landmarks = results.multiHandLandmarks[0];
+
+        // Get palm center (average of landmarks 0, 5, 9, 13, 17 - base of each finger)
+        const palmX =
+          (landmarks[0].x +
+            landmarks[5].x +
+            landmarks[9].x +
+            landmarks[13].x +
+            landmarks[17].x) /
+          5;
+
+        // Check for pinch gesture
+        const pinchDistance = calculatePinchDistance(landmarks);
+        const isPinching = pinchDistance < 0.05; // Threshold for pinch detection
+
+        // Calculate gesture speed based on palm position
+        const gestureSpeed = calculateGestureSpeed(palmX);
+
+        gestureData = {
+          handDetected: true,
+          palmX,
+          isPinching,
+          gestureSpeed
+        };
+
+        // Draw hand landmarks for visual feedback
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.5)';
+        landmarks.forEach((landmark: NormalizedLandmark) => {
+          ctx.beginPath();
+          ctx.arc(
+            landmark.x * canvas.width,
+            landmark.y * canvas.height,
+            5,
+            0,
+            2 * Math.PI
+          );
+          ctx.fill();
+        });
+
+        // Draw connections
+        const connections = [
+          [0, 1],
+          [1, 2],
+          [2, 3],
+          [3, 4], // Thumb
+          [0, 5],
+          [5, 6],
+          [6, 7],
+          [7, 8], // Index
+          [0, 9],
+          [9, 10],
+          [10, 11],
+          [11, 12], // Middle
+          [0, 13],
+          [13, 14],
+          [14, 15],
+          [15, 16], // Ring
+          [0, 17],
+          [17, 18],
+          [18, 19],
+          [19, 20], // Pinky
+          [5, 9],
+          [9, 13],
+          [13, 17] // Palm
+        ];
+
+        ctx.strokeStyle = isPinching
+          ? 'rgba(255, 0, 0, 0.8)'
+          : 'rgba(0, 255, 0, 0.8)';
+        ctx.lineWidth = 2;
+
+        connections.forEach(([start, end]) => {
+          ctx.beginPath();
+          ctx.moveTo(
+            landmarks[start].x * canvas.width,
+            landmarks[start].y * canvas.height
+          );
+          ctx.lineTo(
+            landmarks[end].x * canvas.width,
+            landmarks[end].y * canvas.height
+          );
+          ctx.stroke();
+        });
+      }
+
+      setCurrentGesture(gestureData);
+      onGestureUpdate?.(gestureData);
+    },
+    [calculatePinchDistance, calculateGestureSpeed, onGestureUpdate]
+  );
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    let isMounted = true;
+
+    const initializeHandTracking = async () => {
+      try {
+        // Create video element
+        const video = document.createElement('video');
+        video.style.display = 'none';
+        videoRef.current = video;
+
+        // Create canvas element
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 480;
+        canvasRef.current = canvas;
+
+        // Initialize MediaPipe Hands
+        const hands = new Hands({
+          locateFile: file => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+          }
+        });
+
+        hands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.7,
+          minTrackingConfidence: 0.7
+        });
+
+        hands.onResults(onResults);
+        handsRef.current = hands;
+
+        // Initialize camera
+        const camera = new Camera(video, {
+          onFrame: async () => {
+            if (handsRef.current) {
+              await handsRef.current.send({ image: video });
+            }
+          },
+          width: 640,
+          height: 480
+        });
+
+        cameraRef.current = camera;
+        await camera.start();
+
+        if (isMounted) {
+          setIsInitialized(true);
+          setError(null);
+        }
+      } catch (err) {
+        if (isMounted) {
+          setError(
+            err instanceof Error ? err.message : 'Failed to initialize camera'
+          );
+          console.error('Gesture control initialization error:', err);
+        }
+      }
+    };
+
+    initializeHandTracking();
+
+    return () => {
+      isMounted = false;
+
+      // Cleanup
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+      }
+
+      if (handsRef.current) {
+        handsRef.current.close();
+      }
+
+      if (videoRef.current) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
+          stream.getTracks().forEach(track => track.stop());
+        }
+      }
+    };
+  }, [enabled, onResults]);
+
+  return {
+    isInitialized,
+    error,
+    currentGesture,
+    videoRef,
+    canvasRef
+  };
+}

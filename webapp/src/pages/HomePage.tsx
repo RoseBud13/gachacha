@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
+import GestureControl from '../components/GestureControl';
+import GestureInstructions from '../components/GestureInstructions';
+import type { GestureData } from '../hooks/useGestureControl';
 import './HomePage.css';
 
 interface CardProps {
@@ -102,8 +105,11 @@ const HomePage: React.FC = () => {
   const [isMoving, setIsMoving] = useState(true);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
+  const [gestureEnabled, setGestureEnabled] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const rotationRef = useRef(0);
   const directionRef = useRef(1); // 1 for right, -1 for left
+  const gestureSpeedRef = useRef(0); // Gesture-controlled speed
   const animationRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const cardsWrapperRef = useRef<HTMLDivElement>(null);
@@ -125,12 +131,52 @@ const HomePage: React.FC = () => {
 
   const anglePerCard = useMemo(() => 360 / cardAmount, [cardAmount]);
 
+  // Handle gesture updates
+  const handleGestureUpdate = (gesture: GestureData) => {
+    if (!gesture.handDetected) {
+      gestureSpeedRef.current = 0;
+      return;
+    }
+
+    // If pinching, stop movement and select card
+    if (gesture.isPinching) {
+      gestureSpeedRef.current = 0;
+      if (isMoving) {
+        handleConfirm();
+      }
+    } else {
+      // Update speed based on gesture
+      gestureSpeedRef.current = gesture.gestureSpeed;
+
+      // Update direction based on gesture speed
+      if (gesture.gestureSpeed !== 0) {
+        directionRef.current = gesture.gestureSpeed > 0 ? 1 : -1;
+
+        // If cards were stopped, restart movement
+        if (!isMoving && selectedCard === null) {
+          setIsMoving(true);
+        }
+      }
+    }
+  };
+
   // Animate using just the ref - no state updates, no re-renders!
   useEffect(() => {
     if (!isMoving) return;
 
     const animate = () => {
-      rotationRef.current += 0.5 * moveSpeed * directionRef.current;
+      // Use gesture speed if gesture control is enabled and active
+      const speed =
+        gestureEnabled && gestureSpeedRef.current !== 0
+          ? Math.abs(gestureSpeedRef.current) * moveSpeed * 1.5 // Amplify gesture control
+          : 0.5 * moveSpeed;
+
+      const direction =
+        gestureEnabled && gestureSpeedRef.current !== 0
+          ? Math.sign(gestureSpeedRef.current)
+          : directionRef.current;
+
+      rotationRef.current += speed * direction;
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -141,11 +187,11 @@ const HomePage: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isMoving, moveSpeed]);
+  }, [isMoving, moveSpeed, gestureEnabled]);
 
   // Handle mouse movement
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isMoving || !containerRef.current) return;
+    if (!isMoving || !containerRef.current || gestureEnabled) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -160,7 +206,7 @@ const HomePage: React.FC = () => {
 
   // Handle touch movement
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isMoving || !containerRef.current) return;
+    if (!isMoving || !containerRef.current || gestureEnabled) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.touches[0].clientX - rect.left;
@@ -196,6 +242,7 @@ const HomePage: React.FC = () => {
     // Reset state first to ensure clean transition
     setSelectedCard(null);
     setFlippedCard(null);
+    gestureSpeedRef.current = 0;
 
     // Delete the drawn card if the setting is enabled
     if (deleteDrawnCard && selectedCard !== null && cardContents.length > 3) {
@@ -216,11 +263,35 @@ const HomePage: React.FC = () => {
   const cardWidth = Math.max(120, 160 - cardAmount * 2);
   const cardHeight = Math.max(180, 240 - cardAmount * 3);
 
+  const handleGestureToggle = () => {
+    const newState = !gestureEnabled;
+    setGestureEnabled(newState);
+
+    // Show instructions when enabling gesture control for the first time
+    if (
+      newState &&
+      localStorage.getItem('hasSeenGestureInstructions') !== 'true'
+    ) {
+      setShowInstructions(true);
+    }
+  };
+
   return (
     <div className="home-page">
       <button className="settings-button" onClick={() => navigate('/settings')}>
         ⚙️ Settings
       </button>
+
+      <GestureControl
+        enabled={gestureEnabled}
+        onGestureUpdate={handleGestureUpdate}
+        onToggle={handleGestureToggle}
+      />
+
+      <GestureInstructions
+        show={showInstructions}
+        onClose={() => setShowInstructions(false)}
+      />
 
       <div
         className="card-container"

@@ -1,0 +1,194 @@
+.gesture-instructions-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.gesture-instructions {
+  background: linear-gradient(
+    135deg,
+    rgba(26, 26, 26, 0.98) 0%,
+    rgba(10, 10, 10, 0.98) 100%
+  );
+  padding: 36px;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  max-width: 550px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.gesture-instructions h3 {
+  color: #d4af37;
+  font-size: 28px;
+  margin: 0 0 24px 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.gesture-instructions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+}
+
+.gesture-instructions li {
+  padding: 14px 16px;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid #4a90e2;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.gesture-instructions li:hover {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateX(4px);
+}
+
+.gesture-instructions li strong {
+  color: #4a90e2;
+  font-weight: 600;
+  display: inline-block;
+  min-width: 160px;
+}
+
+.gesture-tips {
+  background: rgba(212, 175, 55, 0.1);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.gesture-tips p {
+  margin: 0;
+  color: #d4af37;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.gesture-tips p:first-child {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.gesture-tips p:not(:first-child) {
+  color: #e0e0e0;
+  margin-left: 8px;
+}
+
+.gesture-instructions button {
+  width: 100%;
+  padding: 14px 32px;
+  font-size: 18px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  color: #0a0a0a;
+  font-weight: 700;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+}
+
+.gesture-instructions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.5);
+  background: linear-gradient(135deg, #f4d03f 0%, #d4af37 100%);
+}
+
+.gesture-instructions button:active {
+  transform: translateY(0);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .gesture-instructions {
+    padding: 24px;
+    width: 95%;
+  }
+
+  .gesture-instructions h3 {
+    font-size: 22px;
+    margin-bottom: 18px;
+  }
+
+  .gesture-instructions li {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .gesture-instructions li strong {
+    display: block;
+    margin-bottom: 4px;
+    min-width: auto;
+  }
+
+  .gesture-tips {
+    padding: 12px;
+  }
+
+  .gesture-tips p {
+    font-size: 13px;
+  }
+
+  .gesture-instructions button {
+    font-size: 16px;
+    padding: 12px 24px;
+  }
+}
+
+/* Smooth scrollbar for overflow */
+.gesture-instructions::-webkit-scrollbar {
+  width: 8px;
+}
+
+.gesture-instructions::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+}
+
+.gesture-instructions::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.5);
+  border-radius: 4px;
+}
+
+.gesture-instructions::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.7);
+}

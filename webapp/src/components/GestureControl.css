@@ -1,0 +1,301 @@
+.gesture-control {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.gesture-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.gesture-toggle-button {
+  padding: 12px 24px;
+  font-size: 16px;
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(74, 144, 226, 0.3);
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.gesture-toggle-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(74, 144, 226, 0.5);
+}
+
+.gesture-toggle-button.active {
+  background: linear-gradient(135deg, #50c878 0%, #3da65d 100%);
+  box-shadow: 0 4px 16px rgba(80, 200, 120, 0.3);
+}
+
+.gesture-toggle-button.active:hover {
+  box-shadow: 0 6px 24px rgba(80, 200, 120, 0.5);
+}
+
+.gesture-status-toggle {
+  padding: 10px 16px;
+  font-size: 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  backdrop-filter: blur(10px);
+}
+
+.gesture-status-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.gesture-status-toggle:active {
+  transform: translateY(0);
+}
+
+.gesture-status {
+  background: rgba(0, 0, 0, 0.85);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  min-width: 300px;
+  max-width: 320px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gesture-message {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  text-align: center;
+  font-weight: 500;
+}
+
+.gesture-message.initializing {
+  background: rgba(74, 144, 226, 0.2);
+  color: #4a90e2;
+  border: 1px solid rgba(74, 144, 226, 0.3);
+}
+
+.gesture-message.error {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+}
+
+.gesture-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gesture-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.status-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.status-icon.pinch {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.status-text {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.speed-indicator {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.speed-bar {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.speed-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  height: 100%;
+  transition: width 0.1s ease-out;
+  border-radius: 10px;
+}
+
+.speed-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 500;
+}
+
+.hand-tracking-canvas {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3);
+  margin-top: 8px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .gesture-control {
+    top: 70px;
+    right: 10px;
+  }
+
+  .gesture-buttons {
+    gap: 6px;
+  }
+
+  .gesture-toggle-button {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .gesture-status-toggle {
+    padding: 8px 12px;
+    font-size: 16px;
+    min-width: 42px;
+  }
+
+  .gesture-status {
+    min-width: 260px;
+    max-width: 280px;
+    padding: 12px;
+  }
+
+  .status-icon {
+    font-size: 20px;
+  }
+
+  .status-text {
+    font-size: 13px;
+  }
+
+  .hand-tracking-canvas {
+    max-height: 200px;
+  }
+}
+
+/* Instructions overlay when first enabling */
+.gesture-instructions {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.95);
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  max-width: 500px;
+  z-index: 2000;
+  text-align: center;
+}
+
+.gesture-instructions h3 {
+  color: #d4af37;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.gesture-instructions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+  text-align: left;
+}
+
+.gesture-instructions li {
+  padding: 12px;
+  margin: 8px 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 3px solid #4a90e2;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.gesture-instructions li strong {
+  color: #4a90e2;
+  font-weight: 600;
+}
+
+.gesture-instructions button {
+  padding: 12px 32px;
+  font-size: 16px;
+  background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+  color: #0a0a0a;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gesture-instructions button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(212, 175, 55, 0.5);
+}
