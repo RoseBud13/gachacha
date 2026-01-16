@@ -45,6 +45,7 @@
   width: 160px;
   height: 240px;
   transform-style: preserve-3d;
+  will-change: contents;
 }
 
 .card {
@@ -52,8 +53,10 @@
   width: 160px;
   height: 240px;
   cursor: pointer;
-  transition: transform 0.1s ease-out, opacity 0.3s ease;
+  transition: opacity 0.3s ease;
   transform-style: preserve-3d;
+  will-change: transform;
+  backface-visibility: hidden;
 }
 
 .card.selected {
@@ -64,10 +67,10 @@
 @keyframes pulse {
   0%,
   100% {
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
   }
   50% {
-    filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.9));
+    filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.7));
   }
 }
 
@@ -77,6 +80,7 @@
   height: 100%;
   transition: transform 0.8s;
   transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .card.flipped .card-inner {
@@ -90,7 +94,7 @@
   height: 100%;
   backface-visibility: hidden;
   border-radius: 16px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .card-back {

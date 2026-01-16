@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
 import './HomePage.css';
@@ -13,15 +19,38 @@ const HomePage: React.FC = () => {
   const [direction, setDirection] = useState(1); // 1 for right, -1 for left
   const animationRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const lastUpdateTimeRef = useRef<number>(0);
 
   const { cardAmount, cardContents, moveSpeed, deleteDrawnCard } = settings;
 
-  // Auto-rotate cards
+  // Cache radius calculation
+  const radius = useMemo(() => {
+    const screenWidth = window.innerWidth;
+    const baseRadius = screenWidth * 0.25;
+    const cardAmountFactor = Math.max(1, cardAmount / 10);
+    const minRadius = 200 * cardAmountFactor;
+    const maxRadius = 400 * cardAmountFactor;
+    return Math.min(
+      maxRadius,
+      Math.max(minRadius, baseRadius * cardAmountFactor)
+    );
+  }, [cardAmount]);
+
+  const anglePerCard = useMemo(() => 360 / cardAmount, [cardAmount]);
+
+  // Auto-rotate cards with throttling for better performance
   useEffect(() => {
     if (!isMoving) return;
 
-    const animate = () => {
-      setRotation(prev => prev + 0.5 * moveSpeed * direction);
+    const FPS_TARGET = 30; // Reduce from 60 FPS to 30 FPS for older devices
+    const FRAME_DURATION = 1000 / FPS_TARGET;
+
+    const animate = (currentTime: number) => {
+      // Throttle updates to target FPS
+      if (currentTime - lastUpdateTimeRef.current >= FRAME_DURATION) {
+        setRotation(prev => prev + 0.5 * moveSpeed * direction);
+        lastUpdateTimeRef.current = currentTime;
+      }
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -105,31 +134,23 @@ const HomePage: React.FC = () => {
     setIsMoving(true);
   };
 
-  // Calculate card positions
-  const getCardStyle = (index: number): React.CSSProperties => {
-    const anglePerCard = 360 / cardAmount;
-    const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
-    // Dynamic radius based on screen width and card amount
-    const screenWidth = window.innerWidth;
-    const baseRadius = screenWidth * 0.25;
-    const cardAmountFactor = Math.max(1, cardAmount / 10); // Scale up for more cards
-    const minRadius = 200 * cardAmountFactor;
-    const maxRadius = 400 * cardAmountFactor;
-    const radius = Math.min(
-      maxRadius,
-      Math.max(minRadius, baseRadius * cardAmountFactor)
-    );
-    const x = Math.sin(angle) * radius;
-    const z = Math.cos(angle) * radius;
-    const scale = (z + radius) / (radius * 2);
-    const rotateY = index * anglePerCard - rotation;
+  // Calculate card positions - optimized with cached values
+  const getCardStyle = useCallback(
+    (index: number): React.CSSProperties => {
+      const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
+      const x = Math.sin(angle) * radius;
+      const z = Math.cos(angle) * radius;
+      const scale = (z + radius) / (radius * 2);
+      const rotateY = index * anglePerCard - rotation;
 
-    return {
-      transform: `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
-      zIndex: Math.round(z + radius),
-      opacity: scale > 0.3 ? 1 : 0.3
-    };
-  };
+      return {
+        transform: `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
+        zIndex: Math.round(z + radius),
+        opacity: scale > 0.3 ? 1 : 0.3
+      };
+    },
+    [rotation, radius, anglePerCard]
+  );
 
   return (
     <div className="home-page">
