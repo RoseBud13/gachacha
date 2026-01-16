@@ -3,9 +3,21 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light;
-  color: rgba(0, 0, 0, 0.87);
-  background-color: #ffffff;
+  /* Black & Gold Theme Colors */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #1a1a1a;
+  --color-bg-elevated: #2a2a2a;
+  --color-gold-primary: #d4af37;
+  --color-gold-secondary: #f4d03f;
+  --color-gold-dark: #b8941f;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #d4af37;
+  --color-text-muted: #999999;
+  --color-shadow: rgba(212, 175, 55, 0.3);
+
+  color-scheme: dark;
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-primary);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,6 +36,7 @@ body {
   display: flex;
   min-width: 320px;
   min-height: 100vh;
+  background: var(--color-bg-primary);
 }
 
 #root {
@@ -34,6 +47,7 @@ body {
 h1 {
   font-size: 3.2em;
   line-height: 1.1;
+  color: var(--color-gold-primary);
 }
 
 button {
@@ -55,6 +69,6 @@ button {
 /* Focus styles for accessibility */
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid #667eea;
+  outline: 2px solid var(--color-gold-primary);
   outline-offset: 2px;
 }
