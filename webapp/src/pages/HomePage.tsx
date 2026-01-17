@@ -1,182 +1,27 @@
-import React, { useState, useEffect, useRef, useMemo, memo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '../context/AppContext';
-import GestureControl from '../components/GestureControl';
-import GestureInstructions from '../components/GestureInstructions';
-import type { GestureData } from '../hooks/useGestureControl';
 import './HomePage.css';
-
-interface CardProps {
-  card: { id: number; text: string };
-  index: number;
-  anglePerCard: number;
-  radius: number;
-  width: number;
-  height: number;
-  isSelected: boolean;
-  isFlipped: boolean;
-  isMoving: boolean;
-  onClick: () => void;
-  rotationRef: React.MutableRefObject<number>;
-}
-
-const Card = memo<CardProps>(
-  ({
-    card,
-    index,
-    anglePerCard,
-    radius,
-    width,
-    height,
-    isSelected,
-    isFlipped,
-    isMoving,
-    onClick,
-    rotationRef
-  }) => {
-    const cardRef = useRef<HTMLDivElement>(null);
-
-    // Update card position directly via DOM - no React re-renders!
-    useEffect(() => {
-      let animationId: number;
-
-      const updatePosition = () => {
-        if (cardRef.current) {
-          const rotation = rotationRef.current;
-          const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
-          const x = Math.sin(angle) * radius;
-          const z = Math.cos(angle) * radius;
-          const scale = (z + radius) / (radius * 2);
-          const rotateY = index * anglePerCard - rotation;
-
-          cardRef.current.style.transform = `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`;
-          cardRef.current.style.zIndex = String(Math.round(z + radius));
-          cardRef.current.style.opacity = scale > 0.3 ? '1' : '0.3';
-        }
-
-        animationId = requestAnimationFrame(updatePosition);
-      };
-
-      updatePosition();
-
-      return () => {
-        if (animationId) {
-          cancelAnimationFrame(animationId);
-        }
-      };
-    }, [index, anglePerCard, radius, rotationRef]);
-
-    return (
-      <div
-        ref={cardRef}
-        className={`card ${isSelected ? 'selected' : ''} ${
-          isFlipped ? 'flipped' : ''
-        }`}
-        style={{
-          width: `${width}px`,
-          height: `${height}px`
-        }}
-        onClick={onClick}
-      >
-        <div className="card-inner">
-          <div className="card-back">
-            <div className="card-back-design">
-              {!isMoving && <div className="card-back-pattern"></div>}
-              {!isFlipped && <div className="card-back-logo">?</div>}
-            </div>
-          </div>
-          <div className="card-front">
-            <div className="card-content">
-              <h2>🎉</h2>
-              <p>{card.text}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-);
-
-Card.displayName = 'Card';
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { settings, updateSettings } = useAppContext();
+  const [rotation, setRotation] = useState(0);
   const [isMoving, setIsMoving] = useState(true);
   const [selectedCard, setSelectedCard] = useState<number | null>(null);
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
-  const [gestureEnabled, setGestureEnabled] = useState(false);
-  const [showInstructions, setShowInstructions] = useState(false);
-  const rotationRef = useRef(0);
-  const directionRef = useRef(1); // 1 for right, -1 for left
-  const gestureSpeedRef = useRef(0); // Gesture-controlled speed
+  const [direction, setDirection] = useState(1); // 1 for right, -1 for left
   const animationRef = useRef<number | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
-  const cardsWrapperRef = useRef<HTMLDivElement>(null);
 
   const { cardAmount, cardContents, moveSpeed, deleteDrawnCard } = settings;
 
-  // Cache radius calculation
-  const radius = useMemo(() => {
-    const screenWidth = window.innerWidth;
-    const baseRadius = screenWidth * 0.25;
-    const cardAmountFactor = Math.max(1, cardAmount / 10);
-    const minRadius = 200 * cardAmountFactor;
-    const maxRadius = 400 * cardAmountFactor;
-    return Math.min(
-      maxRadius,
-      Math.max(minRadius, baseRadius * cardAmountFactor)
-    );
-  }, [cardAmount]);
-
-  const anglePerCard = useMemo(() => 360 / cardAmount, [cardAmount]);
-
-  // Handle gesture updates
-  const handleGestureUpdate = (gesture: GestureData) => {
-    if (!gesture.handDetected) {
-      gestureSpeedRef.current = 0;
-      return;
-    }
-
-    // If pinching, stop movement and select card
-    if (gesture.isPinching) {
-      gestureSpeedRef.current = 0;
-      if (isMoving) {
-        handleConfirm();
-      }
-    } else {
-      // Update speed based on gesture
-      gestureSpeedRef.current = gesture.gestureSpeed;
-
-      // Update direction based on gesture speed
-      if (gesture.gestureSpeed !== 0) {
-        directionRef.current = gesture.gestureSpeed > 0 ? 1 : -1;
-
-        // If cards were stopped, restart movement
-        if (!isMoving && selectedCard === null) {
-          setIsMoving(true);
-        }
-      }
-    }
-  };
-
-  // Animate using just the ref - no state updates, no re-renders!
+  // Auto-rotate cards
   useEffect(() => {
     if (!isMoving) return;
 
     const animate = () => {
-      // Use gesture speed if gesture control is enabled and active
-      const speed =
-        gestureEnabled && gestureSpeedRef.current !== 0
-          ? Math.abs(gestureSpeedRef.current) * moveSpeed * 1.5 // Amplify gesture control
-          : 0.5 * moveSpeed;
-
-      const direction =
-        gestureEnabled && gestureSpeedRef.current !== 0
-          ? Math.sign(gestureSpeedRef.current)
-          : directionRef.current;
-
-      rotationRef.current += speed * direction;
+      setRotation(prev => prev + 0.5 * moveSpeed * direction);
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -187,41 +32,42 @@ const HomePage: React.FC = () => {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [isMoving, moveSpeed, gestureEnabled]);
+  }, [isMoving, direction, moveSpeed]);
 
   // Handle mouse movement
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isMoving || !containerRef.current || gestureEnabled) return;
+    if (!isMoving || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const threshold = 100; // pixels from edge
 
     if (x < threshold) {
-      directionRef.current = -1;
+      setDirection(-1);
     } else if (x > rect.width - threshold) {
-      directionRef.current = 1;
+      setDirection(1);
     }
   };
 
   // Handle touch movement
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isMoving || !containerRef.current || gestureEnabled) return;
+    if (!isMoving || !containerRef.current) return;
 
     const rect = containerRef.current.getBoundingClientRect();
     const x = e.touches[0].clientX - rect.left;
     const threshold = 100;
 
     if (x < threshold) {
-      directionRef.current = -1;
+      setDirection(-1);
     } else if (x > rect.width - threshold) {
-      directionRef.current = 1;
+      setDirection(1);
     }
   };
 
   const handleConfirm = () => {
     // Find the card closest to center (0 degrees position)
-    const normalizedRotation = ((rotationRef.current % 360) + 360) % 360;
+    const anglePerCard = 360 / cardAmount;
+    const normalizedRotation = ((rotation % 360) + 360) % 360;
     const centeredCardIndex =
       Math.round(normalizedRotation / anglePerCard) % cardAmount;
 
@@ -242,7 +88,6 @@ const HomePage: React.FC = () => {
     // Reset state first to ensure clean transition
     setSelectedCard(null);
     setFlippedCard(null);
-    gestureSpeedRef.current = 0;
 
     // Delete the drawn card if the setting is enabled
     if (deleteDrawnCard && selectedCard !== null && cardContents.length > 3) {
@@ -260,20 +105,30 @@ const HomePage: React.FC = () => {
     setIsMoving(true);
   };
 
-  const cardWidth = Math.max(120, 160 - cardAmount * 2);
-  const cardHeight = Math.max(180, 240 - cardAmount * 3);
+  // Calculate card positions
+  const getCardStyle = (index: number): React.CSSProperties => {
+    const anglePerCard = 360 / cardAmount;
+    const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
+    // Dynamic radius based on screen width and card amount
+    const screenWidth = window.innerWidth;
+    const baseRadius = screenWidth * 0.25;
+    const cardAmountFactor = Math.max(1, cardAmount / 10); // Scale up for more cards
+    const minRadius = 200 * cardAmountFactor;
+    const maxRadius = 400 * cardAmountFactor;
+    const radius = Math.min(
+      maxRadius,
+      Math.max(minRadius, baseRadius * cardAmountFactor)
+    );
+    const x = Math.sin(angle) * radius;
+    const z = Math.cos(angle) * radius;
+    const scale = (z + radius) / (radius * 2);
+    const rotateY = index * anglePerCard - rotation;
 
-  const handleGestureToggle = () => {
-    const newState = !gestureEnabled;
-    setGestureEnabled(newState);
-
-    // Show instructions when enabling gesture control for the first time
-    if (
-      newState &&
-      localStorage.getItem('hasSeenGestureInstructions') !== 'true'
-    ) {
-      setShowInstructions(true);
-    }
+    return {
+      transform: `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
+      zIndex: Math.round(z + radius),
+      opacity: scale > 0.3 ? 1 : 0.3
+    };
   };
 
   return (
@@ -282,17 +137,6 @@ const HomePage: React.FC = () => {
         ⚙️ Settings
       </button>
 
-      <GestureControl
-        enabled={gestureEnabled}
-        onGestureUpdate={handleGestureUpdate}
-        onToggle={handleGestureToggle}
-      />
-
-      <GestureInstructions
-        show={showInstructions}
-        onClose={() => setShowInstructions(false)}
-      />
-
       <div
         className="card-container"
         ref={containerRef}
@@ -300,28 +144,40 @@ const HomePage: React.FC = () => {
         onTouchMove={handleTouchMove}
       >
         <div
-          ref={cardsWrapperRef}
           className="cards-wrapper"
           style={{
-            width: `${cardWidth}px`,
-            height: `${cardHeight}px`
+            width: `${Math.max(120, 160 - cardAmount * 2)}px`,
+            height: `${Math.max(180, 240 - cardAmount * 3)}px`
           }}
         >
           {cardContents.slice(0, cardAmount).map((card, index) => (
-            <Card
+            <div
               key={card.id}
-              card={card}
-              index={index}
-              anglePerCard={anglePerCard}
-              radius={radius}
-              width={cardWidth}
-              height={cardHeight}
-              isSelected={selectedCard === index}
-              isFlipped={flippedCard === index}
-              isMoving={isMoving}
+              className={`card ${selectedCard === index ? 'selected' : ''} ${
+                flippedCard === index ? 'flipped' : ''
+              }`}
+              style={{
+                ...getCardStyle(index),
+                width: `${Math.max(120, 160 - cardAmount * 2)}px`,
+                height: `${Math.max(180, 240 - cardAmount * 3)}px`
+              }}
               onClick={() => handleCardClick(index)}
-              rotationRef={rotationRef}
-            />
+            >
+              <div className="card-inner">
+                <div className="card-back">
+                  <div className="card-back-design">
+                    <div className="card-back-pattern"></div>
+                    <div className="card-back-logo">?</div>
+                  </div>
+                </div>
+                <div className="card-front">
+                  <div className="card-content">
+                    <h2>🎉</h2>
+                    <p>{card.text}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       </div>
