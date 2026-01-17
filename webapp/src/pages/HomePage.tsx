@@ -183,81 +183,87 @@ const HomePage: React.FC = () => {
 
   return (
     <div className="home-page">
-      <button className="settings-button" onClick={() => navigate('/settings')}>
-        ⚙️ Settings
-      </button>
-
-      <GestureControl
-        enabled={gestureEnabled}
-        onGestureUpdate={handleGestureUpdate}
-        onToggle={handleGestureToggle}
-      />
+      <div className="home-page-header">
+        <GestureControl
+          enabled={gestureEnabled}
+          onGestureUpdate={handleGestureUpdate}
+          onToggle={handleGestureToggle}
+        />
+        <button
+          className="settings-button"
+          onClick={() => navigate('/settings')}
+        >
+          Settings
+        </button>
+      </div>
 
       <GestureInstructions
         show={showInstructions}
         onClose={() => setShowInstructions(false)}
       />
 
-      <div
-        className="card-container"
-        ref={containerRef}
-        onMouseMove={handleMouseMove}
-        onTouchMove={handleTouchMove}
-      >
+      <div className="home-page-content">
         <div
-          className="cards-wrapper"
-          style={{
-            width: `${Math.max(120, 160 - cardAmount * 2)}px`,
-            height: `${Math.max(180, 240 - cardAmount * 3)}px`
-          }}
+          className="card-container"
+          ref={containerRef}
+          onMouseMove={handleMouseMove}
+          onTouchMove={handleTouchMove}
         >
-          {cardContents.slice(0, cardAmount).map((card, index) => (
-            <div
-              key={card.id}
-              className={`card ${selectedCard === index ? 'selected' : ''} ${
-                flippedCard === index ? 'flipped' : ''
-              }`}
-              style={{
-                ...getCardStyle(index),
-                width: `${Math.max(120, 160 - cardAmount * 2)}px`,
-                height: `${Math.max(180, 240 - cardAmount * 3)}px`
-              }}
-              onClick={() => handleCardClick(index)}
-            >
-              <div className="card-inner">
-                <div className="card-back">
-                  <div className="card-back-design">
-                    <div className="card-back-pattern"></div>
-                    <div className="card-back-logo">?</div>
+          <div
+            className="cards-wrapper"
+            style={{
+              width: `${Math.max(120, 160 - cardAmount * 2)}px`,
+              height: `${Math.max(180, 240 - cardAmount * 3)}px`
+            }}
+          >
+            {cardContents.slice(0, cardAmount).map((card, index) => (
+              <div
+                key={card.id}
+                className={`card ${selectedCard === index ? 'selected' : ''} ${
+                  flippedCard === index ? 'flipped' : ''
+                }`}
+                style={{
+                  ...getCardStyle(index),
+                  width: `${Math.max(120, 160 - cardAmount * 2)}px`,
+                  height: `${Math.max(180, 240 - cardAmount * 3)}px`
+                }}
+                onClick={() => handleCardClick(index)}
+              >
+                <div className="card-inner">
+                  <div className="card-back">
+                    <div className="card-back-design">
+                      <div className="card-back-pattern"></div>
+                      <div className="card-back-logo">?</div>
+                    </div>
                   </div>
-                </div>
-                <div className="card-front">
-                  <div className="card-content">
-                    <h2>🎉</h2>
-                    <p>{card.text}</p>
+                  <div className="card-front">
+                    <div className="card-content">
+                      <h2>🎉</h2>
+                      <p>{card.text}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="controls">
-        {selectedCard === null ? (
-          <button className="confirm-button" onClick={handleConfirm}>
-            Confirm Selection
-          </button>
-        ) : (
-          <div className="action-buttons">
-            <button className="reset-button" onClick={handleReset}>
-              Draw Again
-            </button>
-            {flippedCard === null && (
-              <p className="hint">Click the selected card to reveal!</p>
-            )}
+            ))}
           </div>
-        )}
+        </div>
+
+        <div className="controls">
+          {selectedCard === null ? (
+            <button className="confirm-button" onClick={handleConfirm}>
+              Confirm Selection
+            </button>
+          ) : (
+            <div className="action-buttons">
+              <button className="reset-button" onClick={handleReset}>
+                Draw Again
+              </button>
+              {flippedCard === null && (
+                <p className="hint">Click the selected card to reveal!</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

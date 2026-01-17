@@ -2,18 +2,32 @@
   position: relative;
   width: 100%;
   height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
   background: radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 70%);
   overflow: hidden;
 }
 
+.home-page-header {
+  width: 100%;
+  height: 80px;
+  padding: 20px 10px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+}
+
+.home-page-content {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 80px);
+  padding-bottom: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
 .settings-button {
-  position: absolute;
-  top: 20px;
-  right: 20px;
   padding: 12px 24px;
   font-size: 16px;
   background: rgba(212, 175, 55, 0.1);
@@ -175,7 +189,7 @@
 
 .confirm-button,
 .reset-button {
-  padding: 16px 48px;
+  padding: 12px 48px;
   font-size: 18px;
   font-weight: bold;
   border: none;
@@ -217,6 +231,10 @@
 }
 
 .hint {
+  position: absolute;
+  top: 60px;
+  width: 50vw;
+  text-align: center;
   color: #d4af37;
   font-size: 16px;
   margin: 0;
