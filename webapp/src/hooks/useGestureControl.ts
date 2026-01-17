@@ -56,15 +56,16 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
   const calculateGestureSpeed = useCallback((palmX: number) => {
     // Palm position: 0 (left edge) to 1 (right edge)
     // Center is 0.5
-    const deadZone = 0.2; // Center dead zone (0.3 to 0.7)
+    const deadZone = 0.05; // Small center dead zone (0.45 to 0.55)
+    const maxRange = 0.45; // Range from edge of dead zone to edge of screen
 
     if (palmX > 0.5 + deadZone) {
       // Moving right - cards should move right (positive direction)
-      const intensity = (palmX - (0.5 + deadZone)) / (0.5 - deadZone);
+      const intensity = (palmX - (0.5 + deadZone)) / maxRange;
       return Math.min(1, intensity);
     } else if (palmX < 0.5 - deadZone) {
       // Moving left - cards should move left (negative direction)
-      const intensity = (0.5 - deadZone - palmX) / (0.5 - deadZone);
+      const intensity = (0.5 - deadZone - palmX) / maxRange;
       return -Math.min(1, intensity);
     }
 
@@ -78,6 +79,12 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
+
+      // Set canvas dimensions if not already set
+      if (canvas.width === 0 || canvas.height === 0) {
+        canvas.width = 640;
+        canvas.height = 480;
+      }
 
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -200,11 +207,8 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
         video.style.display = 'none';
         videoRef.current = video;
 
-        // Create canvas element
-        const canvas = document.createElement('canvas');
-        canvas.width = 640;
-        canvas.height = 480;
-        canvasRef.current = canvas;
+        // Wait for canvas to be available from the component
+        // Canvas will be set via the ref in the component
 
         // Initialize MediaPipe Hands
         const hands = new Hands({

@@ -22,6 +22,13 @@ export const GestureControl: React.FC<GestureControlProps> = ({
     }
   );
 
+  // Update gesture state in parent component immediately for smooth updates
+  React.useEffect(() => {
+    if (currentGesture.handDetected) {
+      onGestureUpdate(currentGesture);
+    }
+  }, [currentGesture, onGestureUpdate]);
+
   return (
     <div className="gesture-control">
       <div className="gesture-buttons">
