@@ -54,6 +54,9 @@
   align-items: center;
   justify-content: center;
   perspective: 1500px;
+  -webkit-perspective: 1500px;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .cards-wrapper {
@@ -61,6 +64,9 @@
   width: 160px;
   height: 240px;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .card {
@@ -68,10 +74,11 @@
   width: 160px;
   height: 240px;
   cursor: pointer;
-  transition:
-    transform 0.1s ease-out,
-    opacity 0.3s ease;
+  transition: opacity 0.2s ease;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  will-change: transform, opacity;
+  touch-action: manipulation;
 }
 
 .card.selected {
@@ -93,12 +100,17 @@
   position: relative;
   width: 100%;
   height: 100%;
-  transition: transform 0.8s;
+  transition:
+    transform 0.8s,
+    -webkit-transform 0.8s;
   transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .card.flipped .card-inner {
   transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
 }
 
 .card-back,
@@ -107,8 +119,10 @@
   width: 100%;
   height: 100%;
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
   border-radius: 16px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  will-change: transform;
 }
 
 .card-back {
@@ -154,6 +168,7 @@
   background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
   border: 2px solid #d4af37;
   transform: rotateY(180deg);
+  -webkit-transform: rotateY(180deg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,16 +271,20 @@
 @media (max-width: 768px) {
   .card-container {
     height: 60vh;
+    -webkit-perspective: 1200px;
+    perspective: 1200px;
   }
 
   .cards-wrapper {
-    width: 160px;
-    height: 240px;
+    width: 140px !important;
+    height: 210px !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
 
   .card {
-    width: 160px;
-    height: 240px;
+    width: 140px !important;
+    height: 210px !important;
   }
 
   .settings-button {
@@ -276,6 +295,18 @@
   .confirm-button,
   .reset-button {
     padding: 14px 36px;
+    font-size: 16px;
+  }
+
+  .card-back-logo {
+    font-size: 60px;
+  }
+
+  .card-content h2 {
+    font-size: 36px;
+  }
+
+  .card-content p {
     font-size: 16px;
   }
 }

@@ -13,6 +13,7 @@
 }
 
 .gesture-toggle-button {
+  height: 44px;
   padding: 8px 24px;
   font-size: 16px;
   background: rgba(212, 175, 55, 0.1);
@@ -25,20 +26,28 @@
   white-space: nowrap;
 }
 
-.gesture-toggle-button:hover {
-  transform: translateY(-2px);
-  background: rgba(212, 175, 55, 0.2);
-  box-shadow: 0 0 16px rgba(212, 175, 55, 0.4);
+@media (hover: hover) and (pointer: fine) {
+  .gesture-toggle-button:hover {
+    transform: translateY(-2px);
+    background: rgba(212, 175, 55, 0.2);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.4);
+  }
+
+  .gesture-toggle-button.active:hover {
+    box-shadow: 0 6px 24px rgba(80, 200, 120, 0.5);
+  }
+
+  .gesture-status-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .gesture-toggle-button.active {
   color: white;
   background: linear-gradient(135deg, #50c878 0%, #3da65d 100%);
   box-shadow: 0 4px 16px rgba(80, 200, 120, 0.3);
-}
-
-.gesture-toggle-button.active:hover {
-  box-shadow: 0 6px 24px rgba(80, 200, 120, 0.5);
 }
 
 .gesture-status-toggle {
@@ -55,12 +64,6 @@
   justify-content: center;
   min-width: 48px;
   backdrop-filter: blur(10px);
-}
-
-.gesture-status-toggle:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .gesture-status-toggle:active {
@@ -201,11 +204,6 @@
 
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .gesture-control {
-    top: 70px;
-    right: 10px;
-  }
-
   .gesture-buttons {
     gap: 6px;
   }
@@ -213,6 +211,7 @@
   .gesture-toggle-button {
     padding: 10px 18px;
     font-size: 14px;
+    height: 40px;
   }
 
   .gesture-status-toggle {

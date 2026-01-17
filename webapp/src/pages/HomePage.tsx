@@ -62,14 +62,19 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (!isMoving) return;
 
-    const animate = () => {
+    let lastTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const deltaTime = (currentTime - lastTime) / 16.67; // Normalize to 60fps
+      lastTime = currentTime;
+
       // Use gesture speed when gesture control is enabled, otherwise use normal speed
       const speed =
         gestureEnabled && Math.abs(gestureSpeed) > 0.05
           ? Math.abs(gestureSpeed) * 2 * moveSpeed // Gesture-controlled speed
           : 0.5 * moveSpeed; // Normal automatic speed
 
-      setRotation(prev => prev + speed * direction);
+      setRotation(prev => prev + speed * direction * deltaTime);
       animationRef.current = requestAnimationFrame(animate);
     };
 
@@ -155,30 +160,43 @@ const HomePage: React.FC = () => {
     setIsMoving(true);
   };
 
+  // Calculate radius once and memoize it
+  const radius = React.useMemo(() => {
+    const screenWidth = window.innerWidth;
+    const baseRadius = screenWidth * 0.25;
+    const cardAmountFactor = Math.max(1, cardAmount / 10);
+    const minRadius = 200 * cardAmountFactor;
+    const maxRadius = 400 * cardAmountFactor;
+    return Math.min(
+      maxRadius,
+      Math.max(minRadius, baseRadius * cardAmountFactor)
+    );
+  }, [cardAmount]);
+
+  // Calculate card dimensions once and memoize them
+  const cardDimensions = React.useMemo(
+    () => ({
+      width: Math.max(120, 160 - cardAmount * 2),
+      height: Math.max(180, 240 - cardAmount * 3)
+    }),
+    [cardAmount]
+  );
+
   // Calculate card positions
   const getCardStyle = (index: number): React.CSSProperties => {
     const anglePerCard = 360 / cardAmount;
     const angle = (index * anglePerCard - rotation) * (Math.PI / 180);
-    // Dynamic radius based on screen width and card amount
-    const screenWidth = window.innerWidth;
-    const baseRadius = screenWidth * 0.25;
-    const cardAmountFactor = Math.max(1, cardAmount / 10); // Scale up for more cards
-    const minRadius = 200 * cardAmountFactor;
-    const maxRadius = 400 * cardAmountFactor;
-    const radius = Math.min(
-      maxRadius,
-      Math.max(minRadius, baseRadius * cardAmountFactor)
-    );
     const x = Math.sin(angle) * radius;
     const z = Math.cos(angle) * radius;
     const scale = (z + radius) / (radius * 2);
     const rotateY = index * anglePerCard - rotation;
 
     return {
-      transform: `translate3d(${x}px, 0, ${z}px) rotateY(${rotateY}deg) scale(${scale})`,
+      transform: `translate3d(${x.toFixed(2)}px, 0px, ${z.toFixed(2)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
+      WebkitTransform: `translate3d(${x.toFixed(2)}px, 0px, ${z.toFixed(2)}px) rotateY(${rotateY.toFixed(2)}deg) scale(${scale.toFixed(3)})`,
       zIndex: Math.round(z + radius),
       opacity: scale > 0.3 ? 1 : 0.3
-    };
+    } as React.CSSProperties;
   };
 
   return (
@@ -212,8 +230,8 @@ const HomePage: React.FC = () => {
           <div
             className="cards-wrapper"
             style={{
-              width: `${Math.max(120, 160 - cardAmount * 2)}px`,
-              height: `${Math.max(180, 240 - cardAmount * 3)}px`
+              width: `${cardDimensions.width}px`,
+              height: `${cardDimensions.height}px`
             }}
           >
             {cardContents.slice(0, cardAmount).map((card, index) => (
@@ -224,8 +242,8 @@ const HomePage: React.FC = () => {
                 }`}
                 style={{
                   ...getCardStyle(index),
-                  width: `${Math.max(120, 160 - cardAmount * 2)}px`,
-                  height: `${Math.max(180, 240 - cardAmount * 3)}px`
+                  width: `${cardDimensions.width}px`,
+                  height: `${cardDimensions.height}px`
                 }}
                 onClick={() => handleCardClick(index)}
               >
