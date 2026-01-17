@@ -22,6 +22,7 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const handsRef = useRef<Hands | null>(null);
   const cameraRef = useRef<Camera | null>(null);
+  const onGestureUpdateRef = useRef(onGestureUpdate);
 
   const [isInitialized, setIsInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,11 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
     isPinching: false,
     gestureSpeed: 0
   });
+
+  // Keep the callback ref up to date
+  useEffect(() => {
+    onGestureUpdateRef.current = onGestureUpdate;
+  }, [onGestureUpdate]);
 
   const calculatePinchDistance = useCallback(
     (landmarks: NormalizedLandmark[]) => {
@@ -170,13 +176,20 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
       }
 
       setCurrentGesture(gestureData);
-      onGestureUpdate?.(gestureData);
+      onGestureUpdateRef.current?.(gestureData);
     },
-    [calculatePinchDistance, calculateGestureSpeed, onGestureUpdate]
+    [calculatePinchDistance, calculateGestureSpeed]
   );
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      return;
+    }
+
+    // Don't reinitialize if already initialized (check refs, not state)
+    if (handsRef.current && cameraRef.current) {
+      return;
+    }
 
     let isMounted = true;
 
@@ -243,13 +256,15 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
     return () => {
       isMounted = false;
 
-      // Cleanup
+      // Cleanup resources on unmount or when enabled changes
       if (cameraRef.current) {
         cameraRef.current.stop();
+        cameraRef.current = null;
       }
 
       if (handsRef.current) {
         handsRef.current.close();
+        handsRef.current = null;
       }
 
       if (videoRef.current) {
@@ -257,7 +272,11 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
         if (stream) {
           stream.getTracks().forEach(track => track.stop());
         }
+        videoRef.current = null;
       }
+
+      // Reset state after cleanup
+      setIsInitialized(false);
     };
   }, [enabled, onResults]);
 
