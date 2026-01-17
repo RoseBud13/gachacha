@@ -22,13 +22,6 @@ export const GestureControl: React.FC<GestureControlProps> = ({
     }
   );
 
-  // Update gesture state in parent component immediately for smooth updates
-  React.useEffect(() => {
-    if (currentGesture.handDetected) {
-      onGestureUpdate(currentGesture);
-    }
-  }, [currentGesture, onGestureUpdate]);
-
   return (
     <div className="gesture-control">
       <div className="gesture-buttons">
@@ -102,14 +95,19 @@ export const GestureControl: React.FC<GestureControlProps> = ({
                           <div className="speed-bar">
                             <div
                               className="speed-fill"
+                              key={currentGesture.gestureSpeed}
                               style={{
                                 width: `${
                                   Math.abs(currentGesture.gestureSpeed) * 100
                                 }%`,
                                 left:
-                                  currentGesture.gestureSpeed < 0 ? 0 : 'auto',
+                                  currentGesture.gestureSpeed < 0
+                                    ? '0'
+                                    : 'auto',
                                 right:
-                                  currentGesture.gestureSpeed > 0 ? 0 : 'auto',
+                                  currentGesture.gestureSpeed > 0
+                                    ? '0'
+                                    : 'auto',
                                 background:
                                   currentGesture.gestureSpeed < 0
                                     ? 'linear-gradient(to left, #4a90e2, #357abd)'
