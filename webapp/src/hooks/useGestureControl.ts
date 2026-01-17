@@ -38,19 +38,102 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
     onGestureUpdateRef.current = onGestureUpdate;
   }, [onGestureUpdate]);
 
-  const calculatePinchDistance = useCallback(
-    (landmarks: NormalizedLandmark[]) => {
-      // Calculate distance between thumb tip and index finger tip
-      const thumbTip = landmarks[4];
-      const indexTip = landmarks[8];
-
-      const dx = thumbTip.x - indexTip.x;
-      const dy = thumbTip.y - indexTip.y;
-      const dz = thumbTip.z - indexTip.z;
-
+  const calculateDistance = useCallback(
+    (point1: NormalizedLandmark, point2: NormalizedLandmark) => {
+      const dx = point1.x - point2.x;
+      const dy = point1.y - point2.y;
+      const dz = point1.z - point2.z;
       return Math.sqrt(dx * dx + dy * dy + dz * dz);
     },
     []
+  );
+
+  const detectHandClosure = useCallback(
+    (landmarks: NormalizedLandmark[]) => {
+      // Multiple detection methods for better reliability
+
+      // 1. Check if thumb and index are pinched
+      const thumbIndexDistance = calculateDistance(landmarks[4], landmarks[8]);
+      const thumbIndexPinch = thumbIndexDistance < 0.06;
+
+      // 2. Check if thumb and middle finger are pinched
+      const thumbMiddleDistance = calculateDistance(
+        landmarks[4],
+        landmarks[12]
+      );
+      const thumbMiddlePinch = thumbMiddleDistance < 0.06;
+
+      // 3. Detect fist: all fingertips close to palm center
+      const palmCenter = landmarks[9]; // Middle finger MCP joint (base)
+      const fingertips = [
+        landmarks[8], // Index tip
+        landmarks[12], // Middle tip
+        landmarks[16], // Ring tip
+        landmarks[20] // Pinky tip
+      ];
+
+      const fingertipDistances = fingertips.map(tip =>
+        calculateDistance(tip, palmCenter)
+      );
+      const averageFingertipDistance =
+        fingertipDistances.reduce((a, b) => a + b, 0) /
+        fingertipDistances.length;
+      const isFist = averageFingertipDistance < 0.12; // All fingers close to palm
+
+      // 4. Check finger curl by comparing fingertip Y-positions with their base joints
+      const indexCurled = landmarks[8].y > landmarks[6].y; // Index tip below PIP joint
+      const middleCurled = landmarks[12].y > landmarks[10].y; // Middle tip below PIP joint
+      const ringCurled = landmarks[16].y > landmarks[14].y; // Ring tip below PIP joint
+      const pinkyCurled = landmarks[20].y > landmarks[18].y; // Pinky tip below PIP joint
+
+      const curledFingerCount = [
+        indexCurled,
+        middleCurled,
+        ringCurled,
+        pinkyCurled
+      ].filter(Boolean).length;
+      const mostFingersCurled = curledFingerCount >= 3; // At least 3 fingers curled
+
+      // 5. Check if all fingertips are close together (pinching gesture)
+      const allFingertips = [
+        landmarks[4], // Thumb tip
+        landmarks[8], // Index tip
+        landmarks[12], // Middle tip
+        landmarks[16], // Ring tip
+        landmarks[20] // Pinky tip
+      ];
+
+      // Calculate centroid of all fingertips
+      const centroidX =
+        allFingertips.reduce((sum, tip) => sum + tip.x, 0) /
+        allFingertips.length;
+      const centroidY =
+        allFingertips.reduce((sum, tip) => sum + tip.y, 0) /
+        allFingertips.length;
+      const centroidZ =
+        allFingertips.reduce((sum, tip) => sum + tip.z, 0) /
+        allFingertips.length;
+      const centroid = {
+        x: centroidX,
+        y: centroidY,
+        z: centroidZ
+      } as NormalizedLandmark;
+
+      const maxDistanceFromCentroid = Math.max(
+        ...allFingertips.map(tip => calculateDistance(tip, centroid))
+      );
+      const allFingersTogether = maxDistanceFromCentroid < 0.08; // All fingertips clustered together
+
+      // Return true if ANY of these conditions are met
+      return (
+        thumbIndexPinch ||
+        thumbMiddlePinch ||
+        isFist ||
+        mostFingersCurled ||
+        allFingersTogether
+      );
+    },
+    [calculateDistance]
   );
 
   const calculateGestureSpeed = useCallback((palmX: number) => {
@@ -108,9 +191,8 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
             landmarks[17].x) /
           5;
 
-        // Check for pinch gesture
-        const pinchDistance = calculatePinchDistance(landmarks);
-        const isPinching = pinchDistance < 0.05; // Threshold for pinch detection
+        // Check for hand closure (pinch, fist, or fingers together)
+        const isPinching = detectHandClosure(landmarks);
 
         // Calculate gesture speed based on palm position
         const gestureSpeed = calculateGestureSpeed(palmX);
@@ -185,7 +267,7 @@ export function useGestureControl(options: UseGestureControlOptions = {}) {
       setCurrentGesture(gestureData);
       onGestureUpdateRef.current?.(gestureData);
     },
-    [calculatePinchDistance, calculateGestureSpeed]
+    [detectHandClosure, calculateGestureSpeed]
   );
 
   useEffect(() => {
